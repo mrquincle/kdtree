@@ -1,10 +1,10 @@
+#include <algorithm>
+#include <utility>
+
 /* This function takes last element as pivot, places the pivot element at its correct position in sorted
  * array, and places all smaller (smaller than pivot) to left of pivot and all greater elements to right
  * of pivot.
  */
-#include <algorithm>
-#include <utility>
-
 template<typename RandomAccessIterator1, typename RandomAccessIterator2>
 int partition(RandomAccessIterator1 first1, RandomAccessIterator1 last1, 
         RandomAccessIterator2 first2, RandomAccessIterator2 last2, int low, int high)
@@ -44,8 +44,11 @@ void quicksort_recursive(RandomAccessIterator1 first1, RandomAccessIterator1 las
 }
 
 /**
- * We sort two containers using the information from the first container. This means, if indices are put in the
- * second container, they will point to the original values in ascending order.
+ * We sort a container and update a second container as well using the same sorting operation. The values in the 
+ * second container are sorted according to the information in the first container. If the second container contains
+ * indices from 0 to N-1, the sorted values can be obtained by original_values[indices[i]]. The smallest value will
+ * be original_values[indices[0]]. Note, that the caller has to make a copy of the values. The values are sorted 
+ * in-place.
  */
 template<typename RandomAccessIterator1, typename RandomAccessIterator2>
 void quicksort(RandomAccessIterator1 first1, RandomAccessIterator1 last1, 
@@ -54,3 +57,15 @@ void quicksort(RandomAccessIterator1 first1, RandomAccessIterator1 last1,
     quicksort_recursive(first1, last1, first2, last2, 0, (last1 - first1) - 1);
 }
 
+template<typename RandomAccessIterator1, typename RandomAccessIterator2>
+void inverse(RandomAccessIterator1 first1, RandomAccessIterator1 last1, 
+        RandomAccessIterator2 first2, RandomAccessIterator2 last2)
+{
+    // should be integers
+    __attribute__((unused)) typedef typename std::iterator_traits<RandomAccessIterator1>::value_type ValueType;
+
+    for (int i = 0; i < last1 - first1; ++i) {
+        ValueType index = *(first1 + i);
+        *first2 + index = i;
+    }
+}

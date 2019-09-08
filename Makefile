@@ -1,4 +1,4 @@
 #!/bin/make 
 
 all:
-	g++ test.cpp -I. -o test
+	g++ test.cpp kdtree.cpp  -I. -o test
