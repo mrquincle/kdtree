@@ -40,10 +40,21 @@ Rather then
 
 If the permutator object is used for other purposes, it will run faster if these optimizations are removed.
 
+# Example
+
+An example of a kd-tree:
+
+![kd-tree example](output/points.png?raw=true "Example of a kd-tree")
+
 # Remarks
 
 The optimization with respect to not having to do ordering for each child node is my own. For example, in the
 pseudocode on Wikipedia (the Python example), the point list is adjusted and sorted on every recursive function call.
+
+It might very well be (I didn't look in detail into it) that it's the same optimization as proposed in the following
+paper:
+
+* Brown RA (2015). "Building a balanced k-d tree in O(kn log n) time". Journal of Computer Graphics Techniques. 4 (1): 50–68.
 
 # To do
 
