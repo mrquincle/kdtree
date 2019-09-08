@@ -66,9 +66,24 @@ int test_kdtree() {
     double seed = time(NULL);
     srand(seed);
 
-    int N = 10;
+    int N = 6;
     int k = 2;
 
+    item_t item0 { 7.96, 5.07 };
+    item_t item1 { 7.57, 9.82 };
+    item_t item2 { 4.20, 3.78 };
+    item_t item3 { 6.14, 0.96 };
+    item_t item4 { 2.58, 2.49 };
+    item_t item5 { 8.36, 0.31 };
+
+    items.push_back(&item0);
+    items.push_back(&item1);
+    items.push_back(&item2);
+    items.push_back(&item3);
+    items.push_back(&item4);
+    items.push_back(&item5);
+
+#ifdef RANDOM
     for (int i = 0; i < N; ++i) {
         item_t *item = new item_t(k);
         for (int ik = 0; ik < k; ++ik) {
@@ -76,6 +91,16 @@ int test_kdtree() {
         }
         items.push_back(item);
     }
+#endif
+
+    std::cout << "Data" << std::endl;
+    for (int ik = 0; ik < k; ++ik) {
+        for (int i = 0; i < N; ++i) {
+            std::cout << (*items[i])[ik] << ' ';
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
 
     kdtree tree;
     tree.build(items);
@@ -759,14 +784,20 @@ int test_permutator() {
         std::cout << names[ nashort[i] ] << ", ";
     }
     std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << std::endl;
 }
 
 int main() {
     
-    //return test_quicksort();
+    int success;
 
-    return test_permutator();
+//    success = test_quicksort();
 
- //   return test_kdtree();
+//    success = test_permutator();
+
+    success = test_kdtree();
+
+    return success;
 }
 
