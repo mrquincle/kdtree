@@ -22,16 +22,14 @@ typedef std::vector<indices_t*> k_indices_t;
 template <typename T>
 struct node_t {
 	T value;
-	indices_t *children;
 	node_t<T> *left;
 	node_t<T> *right;
 	node_t<T> *parent;
-	double min_value;
-	double max_value;
 	int level;
-	node_t<T> *k_parent;
-	bool is_left;
-	bool is_inverted;
+	k_indices_t *children;
+
+	std::vector<double> *max_values;
+	std::vector<double> *min_values;
 };
 
 /**
@@ -74,8 +72,6 @@ class kdtree {
 		int k;
 
 		k_indices_t k_indices;
-
-		k_indices_t k_maps;
 
 		node_t<int> btree;
 

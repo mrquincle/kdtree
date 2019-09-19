@@ -2,11 +2,13 @@ clf
 clear all
 clear
 
-M=load("-ascii", "../kd_lines.txt")
+M=load("-ascii", "../kd_lines.txt");
+
+M=sortrows(M);
 
 m = M(:,1);
-x = M(:,5)
-y = M(:,6)
+x = M(:,5);
+y = M(:,6);
 
 l = M(:,2);
 
@@ -41,6 +43,8 @@ for i = 1:N
    labels = {labels{:}, ["", num2str(l(i))]};
 end
 
-legend(labels)
+h = legend(labels);
+legend(h, "location", "northeastoutside")
+legend boxoff
 
 hold off

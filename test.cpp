@@ -65,6 +65,7 @@ int test_kdtree() {
 
     double seed = time(NULL);
     seed = 1231237;
+    seed = 929292;
     srand(seed);
 
     int k = 2;
@@ -102,7 +103,7 @@ int test_kdtree() {
     
     int N = items.size();
 #else
-    int N = 18;
+    int N = 23;
     for (int i = 0; i < N; ++i) {
         item_t *item = new item_t(k);
         for (int ik = 0; ik < k; ++ik) {
@@ -126,12 +127,15 @@ int test_kdtree() {
     kdtree tree;
     tree.build(items);
 
+    std::cout << "The tree: " << std::endl;
     std::cout << tree << std::endl;
 
     tree.set_output_mode(OutputMode::TreeData);
+    std::cout << "The tree and data: " << std::endl;
     std::cout << tree << std::endl;
 
     tree.set_output_mode(OutputMode::Lines);
+    std::cout << "The tree, data, and line coordinates: " << std::endl;
     std::cout << tree << std::endl;
 
     std::ofstream ofile;
