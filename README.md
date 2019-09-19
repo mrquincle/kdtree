@@ -2,43 +2,13 @@
 
 An implementation of a [kd-tree](https://en.wikipedia.org/wiki/K-d_tree).
 
-It uses a permutator object which defines a permutation.  The permutator objects can be multiplied which correspond
-to sequentially executed multiple permutations.
+The first implementation used a permutation operator. It was under the assumption that we can move from one sorted
+dimension to the next sorted dimension by a simple permutation. This is indeed the case if all points are considered.
 
-Setting up a kd-tree means that we sort over dimensions independently. It would be a pity to have to run a sort
-operations multiple times. To sort once for each dimension should be sufficient.
-
-Regarding implementation, what this means is that a particular subset of sorted values in dimension 0 should be
-mapped to (a different) sorted series of values in dimension 1. There is a unique map that maps from sorted values
-in dimension 0 to sorted values in dimension 1.
-
-Next, the implementation has to allow for only a subset of values to be part of this operation. This is done in 
-the multiplication operator by calculating the results like:
-
-    result->push_back(other[indices[i]]);
-
-Rather then
-
-    (*result)[i] = other[indices[i]];
-
-Moreover, to remove the need to copy the required indices to a temporary object, there is an additional operator which
-limits the indices over which the multiplication operator will be performed:
-
-    void restrict(int lower, int upper);
-
-This will restrict the multiplication operator:
-
-    if (indices[i] >= other.lower_limit() && indices[i] < other.upper_limit()) {
-      result->push_back(other[indices[i]]);
-	}
-
-Rather then
-
-    if (indices[i] < other.size()) {
-      result->push_back(other[indices[i]]);
-	}
-
-If the permutator object is used for other purposes, it will run faster if these optimizations are removed.
+However, if we pick a subset of the first dimension, there is no straightforward permutator object to be derived. In
+contrast, we need to iterate over the indices of the items already sorted according to the next dimension. By then
+explicitly comparing with the median of the current dimension we can in one sweep do the partition. This means we
+need to propgate the complete set (for all dimensions) of sorted indices from one node to its children.
 
 # Example
 
@@ -58,7 +28,7 @@ paper:
 
 # To do
 
-This only construct a kd-tree. To use it for nearest neighbour etc., it will also need to be traversed.
+This only constructs a kd-tree. To use it for nearest neighbour etc., it will also need to be traversed.
 
 # Copyright
 
