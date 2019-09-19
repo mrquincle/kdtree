@@ -1,30 +1,46 @@
-x = [7.96 7.57 4.2 6.14 2.58 8.36]
-y = [5.07 9.82 3.78 0.96 2.49 0.31]
-
-m = [10 20 30 40 50 60] * 2;
 clf
+clear all
+clear
+
+M=load("-ascii", "../kd_lines.txt")
+
+m = M(:,1);
+x = M(:,5)
+y = M(:,6)
+
+l = M(:,2);
+
+mm=max(m);
+m=(mm-m)*30+20;
+
+N=numel(x);
+
+m=ones(1,N) *20;
+
+seed = 283049;
+seed = 283;
+rand("seed", seed);
+colors=rand(N,3);
 
 hold on
-for k=1:numel(x)
-	plot(x(k), y(k), ".", "markersize", m(k));
+for k=1:N
+	plot(x(k), y(k), ".", "markersize", m(k), "color", colors(k,:) );
 end
 
-% Note that indices here start with 1
-split=1+1;
+x1=M(:,7);
+y1=M(:,8);
+x2=M(:,9);
+y2=M(:,10);
 
-spx=x(split);
-spy0=0;
-spy1=10;
+for k=1:N
+        plot([x1(k) x2(k)], [y1(k) y2(k)], "-", "color", colors(k,:) )
+end
 
-plot([spx spx], [spy0 spy1], "-")
+labels={};
+for i = 1:N
+   labels = {labels{:}, ["", num2str(l(i))]};
+end
 
-split=4+1;
-
-spy=y(split);
-spx0=0;
-spx1=10;
-
-plot([spx0 spx], [spy spy], "-")
-
+legend(labels)
 
 hold off

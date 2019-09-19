@@ -64,17 +64,27 @@ int test_kdtree() {
     items_t items;
 
     double seed = time(NULL);
+    seed = 1231237;
     srand(seed);
 
-    int N = 6;
     int k = 2;
 
+#define RANDOM
+
+#ifndef RANDOM
     item_t item0 { 7.96, 5.07 };
     item_t item1 { 7.57, 9.82 };
     item_t item2 { 4.20, 3.78 };
     item_t item3 { 6.14, 0.96 };
     item_t item4 { 2.58, 2.49 };
     item_t item5 { 8.36, 0.31 };
+    item_t item6 { 0.19, 8.54 };
+    item_t item7 { 8.39, 4.85 };
+    item_t item8 { 2.19, 7.48 };
+    item_t item9 { 3.65, 7.57 };
+    item_t itemA { 2.86, 6.55 };
+    item_t itemB { 2.49, 9.21 };
+    item_t itemC { 9.52, 8.15 };
 
     items.push_back(&item0);
     items.push_back(&item1);
@@ -82,8 +92,17 @@ int test_kdtree() {
     items.push_back(&item3);
     items.push_back(&item4);
     items.push_back(&item5);
-
-#ifdef RANDOM
+    items.push_back(&item6);
+    items.push_back(&item7);
+    items.push_back(&item8);
+    items.push_back(&item9);
+    items.push_back(&itemA);
+    items.push_back(&itemB);
+    items.push_back(&itemC);
+    
+    int N = items.size();
+#else
+    int N = 18;
     for (int i = 0; i < N; ++i) {
         item_t *item = new item_t(k);
         for (int ik = 0; ik < k; ++ik) {
@@ -92,6 +111,8 @@ int test_kdtree() {
         items.push_back(item);
     }
 #endif
+    std::cout << "Number of items: " << N << std::endl;
+
 
     std::cout << "Data" << std::endl;
     for (int ik = 0; ik < k; ++ik) {
@@ -105,6 +126,18 @@ int test_kdtree() {
     kdtree tree;
     tree.build(items);
 
+    std::cout << tree << std::endl;
+
+    tree.set_output_mode(OutputMode::TreeData);
+    std::cout << tree << std::endl;
+
+    tree.set_output_mode(OutputMode::Lines);
+    std::cout << tree << std::endl;
+
+    std::ofstream ofile;
+    ofile.open("kd_lines.txt", std::ios::out);
+    ofile << tree;
+    ofile.close();
 
     return EXIT_SUCCESS;
 }
