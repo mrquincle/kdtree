@@ -68,7 +68,7 @@ int test_kdtree() {
     std::ofstream ofile;
 
 
-    int number_of_data_items = 51;
+    int number_of_data_items = 9;
 
     double d_seed = time(NULL);
     int seed = rand();
@@ -120,7 +120,8 @@ int test_kdtree() {
     for (int i = 0; i < N; ++i) {
         item_t *item = new item_t(k);
         for (int ik = 0; ik < k; ++ik) {
-            (*item)[ik] = (rand() % 10000) / 1000.;
+            (*item)[ik] = (rand() % 1000) / 100.;
+  //          (*item)[ik] = (rand() % 10000) / 1000.;
         }
         items.push_back(item);
     }
@@ -140,6 +141,7 @@ int test_kdtree() {
     int exit_code = tree.build(items);
     if (exit_code != EXIT_SUCCESS) {
         std::cout << "Cannot be constructed (non unique values?)" << std::endl;
+        assert(false);
         return exit_code;
     }
 

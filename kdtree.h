@@ -49,7 +49,7 @@ class kdtree {
 		~kdtree();
 
 		// Construct the tree
-		int build(items_t & items);
+		int build(items_t & items, bool unique = false);
 		
 		// Reset 
 		void reset(node_t<int> * node);
@@ -104,6 +104,8 @@ class kdtree {
 		node_t<int> btree;
 
 		items_t *items;
+		
+		items_t *original_items;
 
 		OutputMode output_mode;
 
