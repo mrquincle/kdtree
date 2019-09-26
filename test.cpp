@@ -54,18 +54,31 @@ int test_quicksort() {
         std::cout << test_copy[indices[i]] << " ";
     }
     std::cout << std::endl;
-    
 
     return EXIT_SUCCESS;
 }
 
 int test_kdtree() {
+    std::cout << "---------" << std::endl;
+    std::cout << "Next test" << std::endl;
+    std::cout << "---------" << std::endl;
 
     items_t items;
 
-    double seed = time(NULL);
-    seed = 1231237;
-    seed = 929292;
+    std::ofstream ofile;
+
+
+    int number_of_data_items = 51;
+
+    double d_seed = time(NULL);
+    int seed = rand();
+//    seed = 1188221626;
+    std::cout << "Seed used " << seed << std::endl;
+    std::cout << std::endl;
+    ofile.open("kd_seed.txt", std::ios::out);
+    ofile << seed << std::endl;;
+    ofile.close();
+
     srand(seed);
 
     int k = 2;
@@ -103,17 +116,16 @@ int test_kdtree() {
     
     int N = items.size();
 #else
-    int N = 23;
+    int N = number_of_data_items;
     for (int i = 0; i < N; ++i) {
         item_t *item = new item_t(k);
         for (int ik = 0; ik < k; ++ik) {
-            (*item)[ik] = (rand() % 1000) / 100.;
+            (*item)[ik] = (rand() % 10000) / 1000.;
         }
         items.push_back(item);
     }
 #endif
     std::cout << "Number of items: " << N << std::endl;
-
 
     std::cout << "Data" << std::endl;
     for (int ik = 0; ik < k; ++ik) {
@@ -125,8 +137,13 @@ int test_kdtree() {
     std::cout << std::endl;
 
     kdtree tree;
-    tree.build(items);
+    int exit_code = tree.build(items);
+    if (exit_code != EXIT_SUCCESS) {
+        std::cout << "Cannot be constructed (non unique values?)" << std::endl;
+        return exit_code;
+    }
 
+#ifdef VERBOSE
     std::cout << "The tree: " << std::endl;
     std::cout << tree << std::endl;
 
@@ -137,11 +154,66 @@ int test_kdtree() {
     tree.set_output_mode(OutputMode::Lines);
     std::cout << "The tree, data, and line coordinates: " << std::endl;
     std::cout << tree << std::endl;
+#endif
 
-    std::ofstream ofile;
+    tree.set_output_mode(OutputMode::Lines);
     ofile.open("kd_lines.txt", std::ios::out);
     ofile << tree;
     ofile.close();
+    
+    tree.set_output_mode(OutputMode::Boxes);
+    std::cout << "The tree and boxes: " << std::endl;
+    std::cout << tree << std::endl;
+
+    item_t *search_item = new item_t(k);
+    for (int ik = 0; ik < k; ++ik) {
+        (*search_item)[ik] = (rand() % 1000) / 100.;
+    }
+     
+    std::cout << "Search item" << std::endl;
+    for (int ik = 0; ik < k; ++ik) {
+        std::cout << (*search_item)[ik] << ' ';
+    }
+    std::cout << std::endl;
+    std::cout << std::endl;
+
+    int nn = tree.get_nearest_neighbour(*search_item);
+    std::cout << "Nearest neighbour: " << nn << std::endl;
+
+    ofile.open("kd_search.txt", std::ios::out);
+    for (int ik = 0; ik < k; ++ik) {
+        ofile << (*search_item)[ik] << '\t';
+    }
+    ofile << std::endl;
+    ofile.close();
+
+    std::cout << "Which has coordinates:" << std::endl;
+    for (int ik = 0; ik < k; ++ik) {
+        std::cout << (*items[nn])[ik] << "\t";
+    }
+    std::cout << std::endl;
+    std::cout << std::endl;
+
+    std::cout << "Distance: " << tree.distance(*search_item, *items[nn]) << std::endl;
+    
+    // brute-force
+    std::vector<double> distances(N);
+    for (int i = 0; i < N; ++i) {
+        distances[i] =  tree.distance(*search_item, *items[i]);
+    }
+    indices_t d_indices(N);
+    quicksort(distances.begin(), distances.end(), d_indices.begin(), d_indices.end());
+    
+    std::cout << std::endl;
+    
+    for (int i = 0; i < N; ++i) {
+        std::cout << "Distance [" << d_indices[i] << "]\t"  << distances[i] << std::endl;
+    }
+    std::cout << std::endl;
+    if (nn != d_indices[0]) {
+        std::cout << "Warning, algorithm retuns the wrong index to be the one of the shortest distance!" << std::endl;
+    }
+    assert(nn == d_indices[0]);
 
     return EXIT_SUCCESS;
 }
@@ -833,7 +905,11 @@ int main() {
 
 //    success = test_permutator();
 
-    success = test_kdtree();
+    int T = 10000;
+//    T = 5;
+    for (int t = 0; t < T; ++t) {
+        success = test_kdtree();
+    }
 
     return success;
 }

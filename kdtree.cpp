@@ -2,6 +2,7 @@
 #include <quicksort.hpp>
 #include <math.h>
 #include <iostream>
+#include <numeric>
 
 kdtree::kdtree(): output_mode(OutputMode::Tree), verbosity(LogLevel::DEBUG) {
    N = 0;
@@ -15,12 +16,12 @@ kdtree::~kdtree() {
    k_indices.clear();
 }
 
-void kdtree::build(items_t & items) {
+int kdtree::build(items_t & items) {
 
    this->items = &items;
 
    N = items.size();
-   if (N == 0) return;
+   if (N == 0) return EXIT_FAILURE;
 
    k = items[0]->size();
 
@@ -63,7 +64,7 @@ void kdtree::build(items_t & items) {
 
    btree.parent = NULL;
    btree.level = 0;
-   
+   btree.sibling = NULL; 
    btree.max_values = new std::vector<double>(k);
    for (int ik = 0; ik < k; ++ik) {
       (*btree.max_values)[ik] = 10;
@@ -73,7 +74,9 @@ void kdtree::build(items_t & items) {
       (*btree.min_values)[ik] = 0;
    }
    btree.children = &k_indices;
-   descend(0, &btree);
+   return build_descend(0, &btree);
+
+//   reset(&btree);
 }
 
 void kdtree::set_output_mode(OutputMode output_mode) {
@@ -91,7 +94,21 @@ void kdtree::write(std::ostream & os, const node_t<int> & node) const {
    case OutputMode::Lines:
       write_lines(os, node, 0);
       break;
+   case OutputMode::Boxes:
+      write_boxes(os, node, 0);
+      break;
    }
+}
+
+void kdtree::reset(node_t<int> * node) {
+   /*
+   node->visited = false;
+   if (node->left != NULL) {
+      reset(node->left);
+   }
+   if (node->right != NULL) {
+      reset(node->right);
+   }*/
 }
 
 // Just write the tree
@@ -103,9 +120,9 @@ void kdtree::write_tree(std::ostream &os, const node_t<int> & node) const {
    char sep = '\t';
 
    // print indices in the form [node: left right] (no node = -1)
-   os << node.value << sep;
-   os << (node.left ? node.left->value : -1) << sep;
-   os << (node.right ? node.right->value : -1) << sep;
+   os << node.index << sep;
+   os << (node.left ? node.left->index : -1) << sep;
+   os << (node.right ? node.right->index : -1) << sep;
    os << std::endl;
    // print children on next lines
    if (node.left != NULL) {
@@ -120,16 +137,15 @@ void kdtree::write_tree(std::ostream &os, const node_t<int> & node) const {
 void kdtree::write_tree_data(std::ostream &os, const node_t<int> & node) const {
    // print indices in the form [node left right]
    char sep = '\t';
-   os << node.value << sep;
-
-   os << (node.left ? node.left->value : -1) << sep;
-   os << (node.right ? node.right->value : -1) << sep;
+   os << node.index << sep;
+   os << (node.left ? node.left->index : -1) << sep;
+   os << (node.right ? node.right->index : -1) << sep;
    
    // print values of the node
-   if (items->size() < node.value) {
-      std::cerr << "Wrong index used " << items->size() << " < " << node.value << std::endl;
+   if (items->size() < node.index) {
+      std::cerr << "Wrong index used " << items->size() << " < " << node.index << std::endl;
    } else {
-      item_t *item = (*items)[node.value];
+      item_t *item = (*items)[node.index];
       for (auto & it: *item) {
 	 os << it << sep;
       }
@@ -149,16 +165,15 @@ void kdtree::write_lines(std::ostream &os, const node_t<int> & node, int dim) co
    // print indices in the form [node left right]
    char sep = '\t';
 
-   os << node.level << sep << node.value << sep;
-   
-   os << (node.left ? node.left->value : -1) << sep;
-   os << (node.right ? node.right->value : -1) << sep;
+   os << node.level << sep << node.index << sep;
+   os << (node.left ? node.left->index : -1) << sep;
+   os << (node.right ? node.right->index : -1) << sep;
    
    // print values of the node
-   if (items->size() < node.value) {
-      std::cerr << "Wrong index used " << items->size() << " < " << node.value << std::endl;
+   if (items->size() < node.index) {
+      std::cerr << "Wrong index used " << items->size() << " < " << node.index << std::endl;
    } else {
-      item_t *item = (*items)[node.value];
+      item_t *item = (*items)[node.index];
       for (auto & it: *item) {
 	 os << it << sep;
       }
@@ -172,13 +187,12 @@ void kdtree::write_lines(std::ostream &os, const node_t<int> & node, int dim) co
    for (int ik = 0; ik < k; ++ik) {
       coordinates[ic++] = (*node.max_values)[ik];
    }
-   coordinates[dim] = get_value(node.value, dim);
-   coordinates[dim+k] = get_value(node.value, dim);
+   coordinates[dim] = get_value(node.index, dim);
+   coordinates[dim+k] = get_value(node.index, dim);
 
    for (int ic = 0; ic < k * 2; ++ic) {
       os << coordinates[ic] << sep;
    }
-   
    os << std::endl;
 
    // print children on next lines
@@ -188,6 +202,47 @@ void kdtree::write_lines(std::ostream &os, const node_t<int> & node, int dim) co
    }
    if (node.right != NULL) {
       write_lines(os, *node.right, k_next);
+   }
+}
+
+void kdtree::write_boxes(std::ostream &os, const node_t<int> & node, int dim) const {
+   // print indices in the form [node left right]
+   char sep = '\t';
+
+   os << node.level << sep << node.index << sep;
+   os << (node.left ? node.left->index : -1) << sep;
+   os << (node.right ? node.right->index : -1) << sep;
+   
+   // print values of the node
+   if (items->size() < node.index) {
+      std::cerr << "Wrong index used " << items->size() << " < " << node.index << std::endl;
+   } else {
+      item_t *item = (*items)[node.index];
+      for (auto & it: *item) {
+	 os << it << sep;
+      }
+   }
+
+   double coordinates[k * 2];
+   int ic = 0;
+   for (int ik = 0; ik < k; ++ik) {
+      coordinates[ic++] = (*node.min_values)[ik];
+   }
+   for (int ik = 0; ik < k; ++ik) {
+      coordinates[ic++] = (*node.max_values)[ik];
+   }
+   for (int ic = 0; ic < k * 2; ++ic) {
+      os << coordinates[ic] << sep;
+   }
+   os << std::endl;
+
+   // print children on next boxes
+   int k_next = (dim + 1 ) % k;
+   if (node.left != NULL) {
+      write_boxes(os, *node.left, k_next);
+   }
+   if (node.right != NULL) {
+      write_boxes(os, *node.right, k_next);
    }
 }
 
@@ -201,19 +256,30 @@ double kdtree::get_value(int i, int k) const {
 }
 
 
-// hard to get lines right, if descending the tree we get left, left, left, at our left side we have now
-// the minimal value, at the right our k-parent
-void kdtree::descend(int k_dim, node_t<int> *node) {
+int kdtree::build_descend(int k_dim, node_t<int> *node) {
+
+   assert(node != NULL);
+   assert(node->children != NULL);
 
    // get all items sorted across all dimensions from the node's children
    k_indices_t & k_data_indices = *node->children;
   
 #ifdef DEBUGGING 
-   std::cout << "Children [#" << node->children->size() << "]: " << std::endl;
+   std::cout << "Children" << std::endl;
    for (int ik = 0; ik < k; ++ik) {
       indices_t & data_index = *(k_data_indices)[ik];
       for (int i = 0; i < data_index.size(); ++i) {
 	 std::cout << data_index[i] << ' ';
+      }
+      std::cout << std::endl;
+   }
+   std::cout << std::endl;
+   
+   std::cout << "Children values, sorted on dimension " << k_dim << std::endl;
+   for (int ik = 0; ik < k; ++ik) {
+      indices_t & data_index = *(k_data_indices)[ik];
+      for (int i = 0; i < data_index.size(); ++i) {
+	 std::cout << (*(*items)[data_index[i]])[k_dim] << ' ';
       }
       std::cout << std::endl;
    }
@@ -227,35 +293,33 @@ void kdtree::descend(int k_dim, node_t<int> *node) {
    int median = floor((data_indices.size() - 1) / 2);
 
    assert(median < data_indices.size());
-   node->value = data_indices[median];
-
-   //std::cout << std::endl;
-   //std::cout << "Median: " << node->value << std::endl;
-
+   node->index = data_indices[median];
 
    int leftSize = median;
    int rightSize = data_indices.size() - leftSize - 1;
 
-   assert(abs(leftSize - rightSize) < 2);
-   
    // partitioning across "previous" dimension involves a comparison over all elements, order(N)
    item_t & median_data = *(*items)[data_indices[median]];
    
    // all the time compare with median in dimension k_dim
    double median_value = median_data[k_dim];
 
-   //std::cout << "Left size: " << leftSize << std::endl;
-   //std::cout << "Right size: " << rightSize << std::endl;
+#ifdef DEBUGGING
+   std::cout << "Median: " << node->index << std::endl;
+   std::cout << "Median value here: " << median_value << std::endl;
+   std::cout << "Left size: " << leftSize << std::endl;
+   std::cout << "Right size: " << rightSize << std::endl;
+#endif
    if (leftSize > 0) {
       node->left = new node_t<int>();
       node->left->parent = node;
       node->left->children = new k_indices_t();
+      // generate for each dimension [k] indices
       for (int ik = 0; ik < k; ++ik) {
 	 indices_t *temp = new indices_t(leftSize);
 	 node->left->children->push_back(temp);
       }
       node->left->level = node->level+1;
-//      node->left->is_left = true;
 
       node->left->max_values = new std::vector<double>(k);
       for (int ik = 0; ik < k; ++ik) {
@@ -277,7 +341,6 @@ void kdtree::descend(int k_dim, node_t<int> *node) {
 	 node->right->children->push_back(temp);
       }
       node->right->level = node->level+1;
-//      node->right->is_left = false;
       
       node->right->max_values = new std::vector<double>(k);
       for (int ik = 0; ik < k; ++ik) {
@@ -290,8 +353,14 @@ void kdtree::descend(int k_dim, node_t<int> *node) {
       
       (*node->right->min_values)[k_dim] = median_value;
    }
+   
+   if (leftSize > 0 && rightSize > 0) {
+      node->right->sibling = node->left;
+      node->left->sibling = node->right;
+   }
   
    // iterate over data_indices, we use each time a differently sorted list (according to dim ik)
+      //std::cout << "Sort the children" << std::endl;
    for (int ik = 0; ik < k; ++ik) {
       // compare with median at dimension i_k
       indices_t & sorted_indices = *(*node->children)[ik];
@@ -303,13 +372,19 @@ void kdtree::descend(int k_dim, node_t<int> *node) {
 	 }
 
 	 item_t &data_i  = *(*items)[sorted_indices[i]];
-	 //std::cout << "Compare " << median_value << " with "  << data_i[ik] << std::endl;
-	 if (data_i[k_dim] < median_value) {
+	 // std::cout << "Compare " << median_value << " with "  << data_i[ik] << std::endl;
+	 if (data_i[k_dim] == median_value) {
+	    //assert(false);
+	    return EXIT_FAILURE;
+	 }
+	 else if (data_i[k_dim] < median_value) {
+	    assert(leftSize > 0);
 	    k_indices_t *leftChildren = node->left->children;
 	    indices_t & left = (*(*leftChildren)[ik]);
 	    //std::cout << "Add to left [#" << il << "]: " << sorted_indices[i] << std::endl;
 	    left[il++] = sorted_indices[i];
 	 } else {
+	    assert(rightSize > 0);
 	    k_indices_t *rightChildren = node->right->children;
 	    indices_t & right = (*(*rightChildren)[ik]);
 	    //std::cout << "Add to right [#" << ir << "]: " << sorted_indices[i] << std::endl;
@@ -349,13 +424,174 @@ void kdtree::descend(int k_dim, node_t<int> *node) {
 
    int k_next = (k_dim + 1) % k;
   
+   bool exit_code = EXIT_SUCCESS;
    if (leftSize > 0) {
-      descend(k_next, node->left);
+      exit_code = build_descend(k_next, node->left);
+   }
+   if (exit_code != EXIT_SUCCESS) {
+      return exit_code;
    }
    if (rightSize > 0) {
-      descend(k_next, node->right);
+      exit_code = build_descend(k_next, node->right);
+   }
+
+   return exit_code;
+}
+		
+int kdtree::get_nearest_neighbour(item_t & data) {
+   //clear();
+   current_best_distance = distance(data, get_item(btree.index));
+   current_best = btree.index;
+   search_descend(0, &btree, data);
+   return current_best;
+}
+
+template<typename T>
+T euclidean(T x, T y) {
+   return (x-y)*(x-y);
+}
+
+double kdtree::distance(const item_t & item0, const item_t & item1) const {
+   double init = 0.0; 
+   return std::sqrt(std::inner_product(item0.begin(), item0.end(), item1.begin(), init, std::plus<double>(), euclidean<double>));
+}
+
+void kdtree::search_descend(int k_dim, node_t<int> *node, item_t &data) {
+
+   assert(node != NULL);
+
+   //std::cout << "Visit node " << node->index << std::endl;
+   
+   //if (!node->visited) {
+      node->distance = distance(data, get_item(node->index));
+      if (node->distance < current_best_distance) {
+	 current_best_distance = node->distance;
+	 current_best = node->index;
+      }
+   //}
+   //node->visited = true;
+
+   int k_next = (k_dim + 1) % k;
+   
+   bool go_left = false;
+   double dist_hyperplane = data[k_dim] - get_value(node->index, k_dim);
+   if (dist_hyperplane < 0) {
+      go_left = true;
+   }
+   //std::cout << "From " << node->index << " go " << (go_left ? "left" : "right") << std::endl;
+   
+   if (go_left) {
+      if (node->left) {
+	 //std::cout << "Descend left to node: " << node->left->index << std::endl;
+	 search_descend(k_next, node->left, data);
+      }
+   } else {
+      if (node->right) {
+	 //std::cout << "Descend right to node: " << node->right->index << std::endl;
+         search_descend(k_next, node->right, data);
+      }
+   }
+
+   if (abs(dist_hyperplane) < current_best_distance) {
+      bool other_left = !go_left;
+      //std::cout << "From " << node->index << " go also " << (other_left ? "left" : "right") << std::endl;
+      if (other_left) {
+	 if (node->left) {
+	    //std::cout << "Descend left to node: " << node->left->index << std::endl;
+	    search_descend(k_next, node->left, data);
+	 }
+      } else {
+	 if (node->right) {
+	    //std::cout << "Descend right to node: " << node->right->index << std::endl;
+	    search_descend(k_next, node->right, data);
+	 }
+      }
+
+   }
+
+   /*
+   if (go_left) {
+      std::cout << "Go left" << std::endl;
+      if (node->left && !node->left->visited) {
+	 std::cout << "Descend left to node: " << node->left->index << std::endl;
+	 search_descend(k_next, node->left, data);
+      } else if (node->right && !node->right->visited) {
+	 std::cout << "Descend right to node (counter): " << node->right->index << std::endl;
+	 search_descend(k_next, node->right, data);
+      } else {
+	 std::cout << "Just ascend to " << node->index << std::endl;
+	 search_ascend(k_dim, node, data);
+      }
+   }
+   if (!go_left) {
+      std::cout << "Go right" << std::endl;
+      if (node->right && !node->right->visited) {
+	 std::cout << "Descend right to node: " << node->right->index << std::endl;
+         search_descend(k_next, node->right, data);
+      } else if (node->left && !node->left->visited) {
+	 std::cout << "Descend left to node (counter): " << node->left->index << std::endl;
+	 search_descend(k_next, node->left, data);
+      } else {
+	 std::cout << "Just ascend from " << node->index << std::endl;
+	 search_ascend(k_dim, node, data);
+      }
+   }*/
+}
+
+/*
+void kdtree::search_ascend(int k_dim, node_t<int> *node, item_t &data) {
+
+   std::cout << "Visit node " << node->index << std::endl;
+
+   if (!node->visited) {
+      node->distance = distance(data, get_item(node->index));
+      if (node->distance < current_best_distance) {
+	 current_best_distance = node->distance;
+	 current_best = node->index;
+      }
+   }
+   node->visited = true;
+  
+   int k_prev = (k_dim + k - 1) % k;
+
+   if (node->parent) {
+      std::cout << "Inspect parent " << node->parent->index << std::endl;
+      if (node->parent->distance > node->distance) {
+	 if (node->sibling && !node->sibling->visited) {
+	    std::cout << "Inspect sibling: " << node->sibling->index << std::endl;
+	    node->sibling->distance = distance(data, get_item(node->sibling->index));
+	    if (node->sibling->distance < current_best_distance) {
+	       current_best_distance = node->sibling->distance;
+	       current_best = node->sibling->index;
+	    }
+	    node->sibling->visited = true;
+	    if (node->sibling->distance > node->parent->distance) {
+	       std::cout << "Sibling is further away. No need to inspect: " << node->sibling->index << std::endl;
+	       search_ascend(k_prev, node->parent, data);
+	    } else {
+	       std::cout << "Sibling is closer. Need to inspect: " << node->sibling->index << std::endl;
+	       search_descend(k_dim, node->sibling, data);
+	    }
+	 } else {
+	    std::cout << "No sibling for " << node->index << std::endl;
+	    std::cout << "Ascend to " << node->parent->index << std::endl;
+	    search_ascend(k_prev, node->parent, data);
+	 }
+      } else {
+	 if (node->sibling && !node->sibling->visited) {
+	    std::cout << "Parent and sibling are closer. Need to inspect: " << node->sibling->index << std::endl;
+	    search_descend(k_dim, node->sibling, data);
+	 } else {
+	    std::cout << "Sibling does not exist or already visited, ascend" << std::endl;
+	    search_ascend(k_prev, node->parent, data);
+	 }
+      }
+   } else if (node->sibling && !node->sibling->visited) {
+      std::cout << "Inspect sibling of root" << std::endl;
+      search_descend(k_dim, node->sibling, data);
    }
 }
+*/
 
 std::ostream& operator<<(std::ostream& os, const kdtree & tree)
 {

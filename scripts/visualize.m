@@ -4,7 +4,10 @@ clear
 
 M=load("-ascii", "../kd_lines.txt");
 
-M=sortrows(M);
+S=load("-ascii", "../kd_search.txt");
+
+% Can be sorted, does not necessarily make it more clear
+%M=sortrows(M);
 
 m = M(:,1);
 x = M(:,5);
@@ -27,6 +30,11 @@ colors=rand(N,3);
 hold on
 for k=1:N
 	plot(x(k), y(k), ".", "markersize", m(k), "color", colors(k,:) );
+end
+	
+% plot search item
+if (numel(S) > 0)
+   plot(S(1), S(2), "o", "markersize", 7, "color", "red" );
 end
 
 x1=M(:,7);
