@@ -67,11 +67,9 @@ int test_kdtree() {
 
     std::ofstream ofile;
 
+    int number_of_data_items = 51;
 
-    int number_of_data_items = 9;
-
-    double d_seed = time(NULL);
-    int seed = rand();
+    int seed = time(NULL);
 //    seed = 1188221626;
     std::cout << "Seed used " << seed << std::endl;
     std::cout << std::endl;
@@ -116,12 +114,17 @@ int test_kdtree() {
     
     int N = items.size();
 #else
+    bool low_resolution = false;
+
     int N = number_of_data_items;
     for (int i = 0; i < N; ++i) {
         item_t *item = new item_t(k);
         for (int ik = 0; ik < k; ++ik) {
-            (*item)[ik] = (rand() % 1000) / 100.;
-  //          (*item)[ik] = (rand() % 10000) / 1000.;
+          if (low_resolution) {
+            (*item)[ik] = (rand() % 100) / 10.;
+          } else {
+            (*item)[ik] = (rand() % 10000) / 1000.;
+          }
         }
         items.push_back(item);
     }
@@ -169,7 +172,8 @@ int test_kdtree() {
 
     item_t *search_item = new item_t(k);
     for (int ik = 0; ik < k; ++ik) {
-        (*search_item)[ik] = (rand() % 1000) / 100.;
+        //(*search_item)[ik] = (rand() % 1000) / 100.;
+        (*search_item)[ik] = 5;
     }
      
     std::cout << "Search item" << std::endl;
@@ -201,7 +205,7 @@ int test_kdtree() {
     // brute-force
     std::vector<double> distances(N);
     for (int i = 0; i < N; ++i) {
-        distances[i] =  tree.distance(*search_item, *items[i]);
+        distances[i] = tree.distance(*search_item, *items[i]);
     }
     indices_t d_indices(N);
     quicksort(distances.begin(), distances.end(), d_indices.begin(), d_indices.end());
@@ -213,10 +217,18 @@ int test_kdtree() {
     }
     std::cout << std::endl;
     if (nn != d_indices[0]) {
-        std::cout << "Warning, algorithm retuns the wrong index to be the one of the shortest distance!" << std::endl;
+        std::cout << "Warning, algorithm returns a different index to be the one of the shortest distance!" << std::endl;
+        std::cout << "It returns " << nn << " rather than " << d_indices[0] << std::endl;
     }
-    assert(nn == d_indices[0]);
-
+//    assert(nn == d_indices[0]);
+    double diff_distance = abs(distances[nn] - distances[d_indices[0]]);
+    if (diff_distance != 0) {
+      std::cout << "Assertion might be raised. If distances are actually the same there might be a different order returned" << std::endl;
+      std::cout << "It might be better to leave some space for rounding errors" << std::endl;
+    }
+    if (diff_distance > 0.000001) {
+      assert(distances[nn] == distances[d_indices[0]]);
+    }
     return EXIT_SUCCESS;
 }
 
@@ -909,6 +921,7 @@ int main() {
 
     int T = 10000;
 //    T = 5;
+    std::cout << "Number of tests: " << T << std::endl;
     for (int t = 0; t < T; ++t) {
         success = test_kdtree();
     }

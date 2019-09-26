@@ -12,7 +12,7 @@ need to propgate the complete set (for all dimensions) of sorted indices from on
 
 # Example
 
-An example of a kd-tree:
+An example of a kd-tree (constructed with seed `1569513768`):
 
 ![kd-tree example](output/points.png?raw=true "Example of a kd-tree")
 
@@ -26,9 +26,33 @@ paper:
 
 * Brown RA (2015). "Building a balanced k-d tree in O(kn log n) time". Journal of Computer Graphics Techniques. 4 (1): 50–68.
 
-# To do
+# Search
 
-This only constructs a kd-tree. To use it for nearest neighbour etc., it will also need to be traversed.
+Currently search has also been implemented. Consider the points in the picture above. Online you will find quite a few
+flawed search explanations. For example, here the circle represents the node of which we want the nearest neighbour, let
+us call this `p`. The
+root is node `1`. It separates the points through a vertical line at around 2.2. 
+
+At this [quora post](https://www.quora.com/How-does-a-k-d-tree-find-the-K-nearest-neighbors) it is states that you
+have to consider the left and right node from `1`, which are `2` and `4` respectively. The author state now to calculate
+the difference between the `p` and `2` as well as between `p` and `4`. Then disregard the tree that is further away.
+You see that `4` is further away and it would mean that we have to disregard `4` as well as `0`!
+
+The right thing to do is to calculate the distance from `p` with (for example!) `4`. Then if we find that this 
+distance is smaller then the distance between `p` and `1` we can disregard the "other" tree of `1` (where `4` does not
+belong to, the tree `2`).  
+
+# Uniqueness
+
+Getting the median across a particular axis becomes ambiguous if there are duplicate values for a coordinate. For now
+we use a simple N-order method where we increment a value with the next possible double.
+
+# Rounding errors
+
+We run 10.000 tests with around 50 nodes. We compare the results with an ordinary quicksort. The node with the closest
+distance should be the same for the search through the kd-tree as for the ordinary quicksort. However, if the data is
+discrete there can be multiple nodes at the same closest distance. If the nearest node is not unique, an assertion can
+be raised. The rounding error with the distance is set to 0.000001.
 
 # Copyright
 

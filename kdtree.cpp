@@ -65,14 +65,24 @@ int kdtree::build(items_t & p_items, bool unique) {
 	 indices_t &indices = *k_indices[ik];
 	 double prev_value = (*(*items)[indices[0]])[ik];
 	 double value;
+	 double last_assigned_value;
+	 bool same_value = false;
 	 for (int in = 1; in < N; ++in) {
 	    value = (*(*items)[indices[in]])[ik];
 	    if (value == prev_value) {
-	       double next_value = std::nextafter(value, std::numeric_limits<double>::max());
-	       //std::cout << "Change value from " << value << " to " << next_value << std::endl;
-	       (*(*items)[indices[in]])[ik] = next_value;
-	       assert(value != next_value);
+	       // first non-unique value
+	       if (!same_value) {
+		  last_assigned_value = value;
+	       }
+	       same_value = true; 
+	    } else {
+	       same_value = false;
 	    }
+	    if (same_value) {
+	       last_assigned_value = std::nextafter(last_assigned_value, std::numeric_limits<double>::max());
+	       //std::cout << "Change value from " << value << " to " << next_value << std::endl;
+	       (*(*items)[indices[in]])[ik] = last_assigned_value;
+	    } 
 	    prev_value = value;
 	 }
 	 //std::cout << std::endl;
@@ -479,7 +489,6 @@ int kdtree::build_descend(int k_dim, node_t<int> *node) {
 }
 		
 int kdtree::get_nearest_neighbour(item_t & data) {
-   //clear();
    current_best_distance = distance(data, get_item(btree.index));
    current_best = btree.index;
    search_descend(0, &btree, data);
@@ -543,7 +552,6 @@ void kdtree::search_descend(int k_dim, node_t<int> *node, item_t &data) {
 	    search_descend(k_next, node->right, data);
 	 }
       }
-
    }
 }
 
