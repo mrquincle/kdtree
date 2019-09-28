@@ -51,8 +51,8 @@ class kdtree {
 		// Construct the tree
 		int build(items_t & items, bool unique = false);
 		
-		// Reset 
-		void reset(node_t<int> * node);
+		// Reset, you'll need to construct again after calling reset
+		void reset();
 
 		// Get index of nearest neighbour
 		int get_nearest_neighbour(item_t & data);
@@ -110,7 +110,10 @@ class kdtree {
 		OutputMode output_mode;
 
 		int current_best;
+
 		double current_best_distance;
+
+		int steps;
 
 		friend std::ostream& operator<<(std::ostream& os, const kdtree & tree);
 };

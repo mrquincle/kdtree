@@ -67,17 +67,22 @@ int test_kdtree() {
 
     std::ofstream ofile;
 
-    int number_of_data_items = 51;
 
+    static bool once = true;
     int seed = time(NULL);
-//    seed = 1188221626;
-    std::cout << "Seed used " << seed << std::endl;
-    std::cout << std::endl;
-    ofile.open("kd_seed.txt", std::ios::out);
-    ofile << seed << std::endl;;
-    ofile.close();
+    if (once) {
+        //    seed = 1188221626;
+        std::cout << "Seed used " << seed << std::endl;
+        std::cout << std::endl;
+        ofile.open("kd_seed.txt", std::ios::out);
+        ofile << seed << std::endl;;
+        ofile.close();
 
-    srand(seed);
+        srand(seed);
+        once = false;
+    }
+    
+    int number_of_data_items = rand() % 40 + 2;
 
     int k = 2;
 
@@ -229,6 +234,9 @@ int test_kdtree() {
     if (diff_distance > 0.000001) {
       assert(distances[nn] == distances[d_indices[0]]);
     }
+
+    tree.reset();
+
     return EXIT_SUCCESS;
 }
 
@@ -919,8 +927,7 @@ int main() {
 
 //    success = test_permutator();
 
-    int T = 10000;
-//    T = 5;
+    int T = 1000;
     std::cout << "Number of tests: " << T << std::endl;
     for (int t = 0; t < T; ++t) {
         success = test_kdtree();

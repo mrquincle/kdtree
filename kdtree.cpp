@@ -12,11 +12,26 @@ kdtree::kdtree(): output_mode(OutputMode::Tree), verbosity(LogLevel::DEBUG) {
 }
 
 kdtree::~kdtree() {
+}
+
+void kdtree::reset() {
+   for (auto iter: *items) {
+      delete iter;
+   }
+   delete items;
    for (auto iter: k_indices) {
       delete iter;
    }
    k_indices.clear();
+   N = 0;
+   k = 0;
+   original_items->clear();
+   // leaks, if required in your application, descend and destroy tree recursively
+   btree.children = NULL;
+   btree.left = NULL;
+   btree.right = NULL;
 }
+
 
 int kdtree::build(items_t & p_items, bool unique) {
    
@@ -120,8 +135,6 @@ int kdtree::build(items_t & p_items, bool unique) {
    }
    btree.children = &k_indices;
    return build_descend(0, &btree);
-
-//   reset(&btree);
 }
 
 void kdtree::set_output_mode(OutputMode output_mode) {
@@ -143,17 +156,6 @@ void kdtree::write(std::ostream & os, const node_t<int> & node) const {
       write_boxes(os, node, 0);
       break;
    }
-}
-
-void kdtree::reset(node_t<int> * node) {
-   /*
-   node->visited = false;
-   if (node->left != NULL) {
-      reset(node->left);
-   }
-   if (node->right != NULL) {
-      reset(node->right);
-   }*/
 }
 
 // Just write the tree
@@ -209,7 +211,6 @@ void kdtree::write_tree_data(std::ostream &os, const node_t<int> & node) const {
 void kdtree::write_lines(std::ostream &os, const node_t<int> & node, int dim) const {
    // print indices in the form [node left right]
    char sep = '\t';
-
    os << node.level << sep << node.index << sep;
    os << (node.left ? node.left->index : -1) << sep;
    os << (node.right ? node.right->index : -1) << sep;
@@ -489,9 +490,13 @@ int kdtree::build_descend(int k_dim, node_t<int> *node) {
 }
 		
 int kdtree::get_nearest_neighbour(item_t & data) {
-   current_best_distance = distance(data, get_item(btree.index));
-   current_best = btree.index;
+   int first_index = btree.index;
+   //std::cout << "First index: " << first_index << std::endl;
+   current_best_distance = distance(data, get_item(first_index));
+   current_best = first_index;
+   steps = 0;
    search_descend(0, &btree, data);
+   std::cout << "Steps " << steps << " (bruteforce would've been " << items->size() << ")" << std::endl;
    return current_best;
 }
 
@@ -506,6 +511,8 @@ double kdtree::distance(const item_t & item0, const item_t & item1) const {
 }
 
 void kdtree::search_descend(int k_dim, node_t<int> *node, item_t &data) {
+
+   steps++;
 
    assert(node != NULL);
 
