@@ -26,21 +26,24 @@ paper:
 
 * Brown RA (2015). "Building a balanced k-d tree in O(kn log n) time". Journal of Computer Graphics Techniques. 4 (1): 50–68.
 
+In that case, feel free to use this implementation as an independent implementation apart from that paper. Feel also
+free to read through that paper to understand my code. As soon as you understand that you can presort for the different
+dimensions, the implementation details are probably similar.
+
 # Search
 
-Currently search has also been implemented. Consider the points in the picture above. Online you will find quite a few
+Search using the kd-tree has also been implemented. Consider the points in the picture above. Online you will find quite a few
 flawed search explanations. For example, here the circle represents the node of which we want the nearest neighbour, let
-us call this `p`. The
-root is node `1`. It separates the points through a vertical line at around 2.2. 
+us call this `p`. The root is node `1`. It separates the points through a vertical line at around 2.2. 
 
-At this [quora post](https://www.quora.com/How-does-a-k-d-tree-find-the-K-nearest-neighbors) it is states that you
-have to consider the left and right node from `1`, which are `2` and `4` respectively. The author state now to calculate
+At this [quora post](https://www.quora.com/How-does-a-k-d-tree-find-the-K-nearest-neighbors) it is stated that you
+have to consider the left and right node from `1`, which are `2` and `4` respectively. The author states now to calculate
 the difference between the `p` and `2` as well as between `p` and `4`. Then disregard the tree that is further away.
 You see that `4` is further away and it would mean that we have to disregard `4` as well as `0`!
 
 The right thing to do is to calculate the distance from `p` with (for example!) `4`. Then if we find that this 
 distance is smaller then the distance between `p` and `1` we can disregard the "other" tree of `1` (where `4` does not
-belong to, the tree `2`).  
+belong to, the tree `2`).
 
 # Uniqueness
 
